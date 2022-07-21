@@ -1,0 +1,5 @@
+DATABASE_NAME = 'pinterest'
+DATABASE_USER = 'krona'
+DATABASE_PASSWORD = 'krona'
+DATABASE_HOST = 'localhost'
+DATABASE_PORT = '3306'
