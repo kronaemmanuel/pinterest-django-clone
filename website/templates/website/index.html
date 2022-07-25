@@ -1,35 +1,15 @@
+{% extends 'website/base.html' %}
+
 {% block content %}
-
-    <div class="content">
-        <div class="section-inner clearfix">
-
-        <p>Welcome {{ request.user.username }} !</p>
-
-        {% if messages %}
-        <ul>
-            {% for message in messages %}
-            <li>{{ message }}</li>
-            {% endfor %}
-        </ul>
-        {% endif %}
-
-
-        <p>User Details:</p>
-
-        <ul>
-            <li>First Name: {{ request.user.first_name|default:"NA" }}</li>
-            <li>Last Name: {{ request.user.last_name|default:"NA" }}</li>
-            <li>Email: {{ request.user.email|default:"NA" }}</li>
-            <li>SuperUser: {{ request.user.is_superuser }}</li>
-            <li>Staff: {{ request.user.is_staff }}</li>
-            <li>Date Joined: {{ request.user.date_joined }}</li>
-            <li>Last Login: {{ request.user.last_login }}</li>
-        </ul>
-
-        <p><a href="{% url 'website:logout' %}">Logout</a></p>
-        <p><a href="{% url 'website:user_update' %}">Update User Details</a></p>
-
+<div class="container mt-4">
+    <div class="p-5 mb-4 bg-light rounded-3">
+        <div class="container-fluid py-5">
+            <h1 class="text-red display-5 fw-bold"><span class="text-danger">Pinterest:</span> Find your next great idea
+            </h1>
+            <p class="col-md-8 fs-4">Pinterest Clone is a platform where you can upload pictures and view pictures
+                uploaded by other people.</p>
+            <a class="btn btn-outline-danger" href="{% url 'website:login' %}">Get started</a>
         </div>
     </div>
-
-{% endblock %}
+</div>
+{% endblock content %}

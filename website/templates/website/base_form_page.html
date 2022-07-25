@@ -1,0 +1,28 @@
+{% extends 'website/base.html' %}
+
+{% block title %}{{ heading }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="h-100 p-5 bg-light border rounded-3">
+        <div class="section-inner clearfix">
+            <h1>{{ heading }}</h1>
+            {% if secondary_text and secondary_link and secondary_link_text %}
+            <p>{{ secondary_text }} <a href="{% url secondary_link %}" class="text-danger">{{ secondary_link_text }}</a>
+            </p>
+            {% endif %}
+
+            {% if messages %}
+            <ul class="text-danger">
+                {% for message in messages %}
+                <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+            {% include "website/form.html" %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}

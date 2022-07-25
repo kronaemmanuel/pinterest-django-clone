@@ -1,0 +1,16 @@
+{% load add_classes_tag %}
+
+<form method="POST">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    {% for field in form %}
+    <div class="mb-3">
+        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+        {{ field|add_classes:'form-control' }}
+    </div>
+    {{ field.errors }}
+    {% endfor %}
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
