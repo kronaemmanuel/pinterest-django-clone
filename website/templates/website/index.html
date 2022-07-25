@@ -5,9 +5,20 @@
 
         <p>Welcome {{ request.user.username }} !</p>
 
+        {% if messages %}
+        <ul>
+            {% for message in messages %}
+            <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+
         <p>User Details:</p>
 
         <ul>
+            <li>First Name: {{ request.user.first_name|default:"NA" }}</li>
+            <li>Last Name: {{ request.user.last_name|default:"NA" }}</li>
             <li>Email: {{ request.user.username.email|default:"NA" }}</li>
             <li>SuperUser: {{ request.user.is_superuser }}</li>
             <li>Staff: {{ request.user.is_staff }}</li>
@@ -16,6 +27,7 @@
         </ul>
 
         <p><a href="{% url 'website:logout' %}">Logout</a></p>
+        <p><a href="{% url 'website:user_update' %}">Update User Details</a></p>
 
         </div>
     </div>

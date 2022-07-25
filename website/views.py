@@ -1,7 +1,8 @@
-from django.contrib import messages
+from django.contrib import auth, messages
 from django.contrib.auth.forms import UserCreationForm
-from django.shortcuts import render, redirect
-from django.contrib import auth
+from django.contrib.auth.models import User
+from django.forms import ModelForm
+from django.shortcuts import redirect, render
 
 
 def login(request):
@@ -29,7 +30,7 @@ def logout(request):
 
 def index(request):
     if not request.user.is_authenticated:
-        return redirect('login')
+        return redirect('website:login')
 
     return render(request, 'website/index.html')
 
@@ -48,3 +49,26 @@ def register(request):
         form = UserCreationForm()
 
     return render(request, 'website/register.html', {'form': form})
+
+
+class UserForm(ModelForm):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email']
+
+
+def user_update(request):
+    if not request.user.is_authenticated:
+        return redirect('website:login')
+
+    if request.method == 'POST':
+        form = UserForm(data=request.POST, instance=request.user)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.save()
+            messages.success(request, 'User updated successfully')
+            return redirect('website:index')
+    else:
+        form = UserForm(instance=request.user)
+
+    return render(request, 'website/user_update_form.html', {'form': form})
