@@ -19,7 +19,7 @@
         <ul>
             <li>First Name: {{ request.user.first_name|default:"NA" }}</li>
             <li>Last Name: {{ request.user.last_name|default:"NA" }}</li>
-            <li>Email: {{ request.user.username.email|default:"NA" }}</li>
+            <li>Email: {{ request.user.email|default:"NA" }}</li>
             <li>SuperUser: {{ request.user.is_superuser }}</li>
             <li>Staff: {{ request.user.is_staff }}</li>
             <li>Date Joined: {{ request.user.date_joined }}</li>
