@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib import auth, messages
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 from django.forms import ModelForm
@@ -72,6 +73,7 @@ def register(request):
     return render(request, 'website/register.html', {'form': form})
 
 
+@login_required
 def profile(request):
     return render(request, 'website/profile.html')
 
@@ -82,10 +84,8 @@ class UserUpdateForm(ModelForm):
         fields = ['first_name', 'last_name', 'email']
 
 
+@login_required
 def profile_update(request):
-    if not request.user.is_authenticated:
-        return redirect('website:login')
-
     if request.method == 'POST':
         form = UserUpdateForm(data=request.POST, instance=request.user)
         if form.is_valid():
@@ -99,22 +99,16 @@ def profile_update(request):
     return render(request, 'website/user_update_form.html', {'form': form})
 
 
+@login_required
 def feed(request):
-    if not request.user.is_authenticated:
-        return redirect('website:login')
-
     return render(request, 'website/feed.html')
 
 
+@login_required
 def saved_pins(request):
-    if not request.user.is_authenticated:
-        return redirect('website:login')
-
     return render(request, 'website/saved_pins.html')
 
 
+@login_required
 def upload(request):
-    if not request.user.is_authenticated:
-        return redirect('website:login')
-
     return render(request, 'website/upload.html')
