@@ -37,3 +37,5 @@ This is a bare bones clone of the Pinterest Web app which has the following func
 
 ## Extra Libraries
 - Pillow: `python -m pip install Pillow`
+- Debug Toolbar: `python -m pip install django-debug-toolbar`
+
