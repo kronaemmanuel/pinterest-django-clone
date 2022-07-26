@@ -35,3 +35,5 @@ This is a bare bones clone of the Pinterest Web app which has the following func
     python manage.py runserver
     ```
 
+## Extra Libraries
+- Pillow: `python -m pip install Pillow`
