@@ -28,8 +28,8 @@ def save_user_profile(sender, instance, **kwargs):
 class Pin(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
-    created_at = models.DateTimeField()
-    likes = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    likes = models.PositiveIntegerField(default=0)
     picture = models.ImageField(upload_to='images/')
     user_profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
 

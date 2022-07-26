@@ -6,6 +6,8 @@ from django.contrib.auth.models import User
 from django.forms import ModelForm
 from django.shortcuts import redirect, render
 
+from .models import Pin, Profile
+
 
 def index(request):
     if request.user.is_authenticated:
@@ -109,6 +111,27 @@ def saved_pins(request):
     return render(request, 'website/saved_pins.html')
 
 
+class PinUploadForm(ModelForm):
+    class Meta:
+        model = Pin
+        fields =  ['title', 'description', 'picture']
+
+
 @login_required
 def upload(request):
-    return render(request, 'website/upload.html')
+    if request.method == 'POST':
+        form = PinUploadForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            pin = form.save(commit=False)
+            pin.user_profile = Profile.objects.get(user=request.user)
+            pin.save()
+            messages.success(request, 'Pin uploaded successfully')
+            return redirect('website:feed')
+        else:
+            messages.error(request, 'There was a problem with your form, Please try again')
+            return redirect('website:upload')
+
+    else:
+        form = PinUploadForm()
+    return render(request, 'website/upload.html', {'form': form})
