@@ -1,12 +1,15 @@
+from django import forms
 from django.contrib import auth, messages
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 from django.forms import ModelForm
 from django.shortcuts import redirect, render
-from django import forms
 
 
 def index(request):
+    if request.user.is_authenticated:
+        return redirect('website:feed')
+
     return render(request, 'website/index.html')
 
 
@@ -24,7 +27,7 @@ class UserLoginForm(AuthenticationForm):
 
 def login(request):
     if request.user.is_authenticated:
-        return redirect('website:index')
+        return redirect('website:feed')
 
     if request.method == 'POST':
         form = UserLoginForm(data=request.POST)
@@ -32,11 +35,12 @@ def login(request):
         if form.is_valid():
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
-            user = auth.authenticate(request=request, username=username, password=password)
+            user = auth.authenticate(
+                request=request, username=username, password=password)
 
             if user.is_authenticated:
                 auth.login(request, user)
-                return redirect('website:index')
+                return redirect('website:feed')
 
     else:
         form = UserLoginForm()
@@ -107,3 +111,10 @@ def saved_pins(request):
         return redirect('website:login')
 
     return render(request, 'website/saved_pins.html')
+
+
+def upload(request):
+    if not request.user.is_authenticated:
+        return redirect('website:login')
+
+    return render(request, 'website/upload.html')
