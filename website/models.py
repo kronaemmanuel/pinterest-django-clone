@@ -30,5 +30,8 @@ class Pin(models.Model):
     description = models.TextField()
     created_at = models.DateTimeField()
     likes = models.PositiveIntegerField()
-    picture = models.ImageField(upload_to='pins')
+    picture = models.ImageField(upload_to='images/')
     user_profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.title
