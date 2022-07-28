@@ -1,5 +1,7 @@
 {% extends 'website/base.html' %}
 
+{% block title %}Feed{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
     <div class="p-5 mb-4 bg-light rounded-3">
@@ -13,6 +15,18 @@
                 Upload
             </a>
         </div>
+    </div>
+
+    <div class="d-flex flex-wrap justify-content-center">
+        {% for pin in pins %}
+        <div class="card col-sm-3 me-4 mb-4">
+            <img src="{{ pin.picture.url }}" class="card-img-top" alt="{{ pin.description|lower }}">
+            <div class="card-body">
+                <h5 class="card-title">{{ pin.title }}</h5>
+                <p class="card-text">{{ pin.description }}</p>
+            </div>
+        </div>
+        {% endfor %}
     </div>
 </div>
 {% endblock content %}

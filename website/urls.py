@@ -10,7 +10,7 @@ urlpatterns = [
     path('register', views.register, name='register'),
     path('profile', views.profile, name='profile'),
     path('profile_update', views.profile_update, name='profile_update'),
-    path('feed', views.feed, name='feed'),
+    path('feed', views.Feed.as_view(), name='feed'),
     path('saved_pins', views.saved_pins, name='saved_pins'),
     path('upload', views.upload, name='upload')
 ]

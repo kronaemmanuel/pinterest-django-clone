@@ -2,9 +2,11 @@ from django import forms
 from django.contrib import auth, messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.forms import ModelForm
 from django.shortcuts import redirect, render
+from django.views.generic.list import ListView
 
 from .models import Pin, Profile
 
@@ -101,9 +103,17 @@ def profile_update(request):
     return render(request, 'website/user_update_form.html', {'form': form})
 
 
-@login_required
-def feed(request):
-    return render(request, 'website/feed.html')
+class Feed(LoginRequiredMixin, ListView):
+    login_url = 'website:login'
+    model = Pin
+    context_object_name = 'pins'
+    template_name = 'website/feed.html'
+
+    def get_queryset(self):
+        """
+        Returns the pins ordered in reverse chronological order
+        """
+        return Pin.objects.order_by('-created_at')
 
 
 @login_required
@@ -126,7 +136,6 @@ def upload(request):
             pin = form.save(commit=False)
             pin.user_profile = Profile.objects.get(user=request.user)
             pin.save()
-            messages.success(request, 'Pin uploaded successfully')
             return redirect('website:feed')
         else:
             messages.error(request, 'There was a problem with your form, Please try again')
