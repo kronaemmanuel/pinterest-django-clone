@@ -1,26 +1,54 @@
+from django import forms
 from django.contrib import auth, messages
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 from django.forms import ModelForm
 from django.shortcuts import redirect, render
 
+from .models import Pin, Profile
+
+
+def index(request):
+    if request.user.is_authenticated:
+        return redirect('website:feed')
+
+    return render(request, 'website/index.html')
+
+
+class UserLoginForm(AuthenticationForm):
+    def __init__(self, *args, **kwargs):
+        super(UserLoginForm, self).__init__(*args, **kwargs)
+
+    class Meta:
+        model = User
+        fields = ['username', 'password']
+        widgets = {
+            'password': forms.PasswordInput(),
+        }
+
 
 def login(request):
     if request.user.is_authenticated:
-        return redirect('index')
+        return redirect('website:feed')
 
     if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        user = auth.authenticate(username=username, password=password)
+        form = UserLoginForm(data=request.POST)
 
-        if user is not None:
-            auth.login(request, user)
-            return redirect('website:index')
-        else:
-            messages.error(request, 'Error wrong username/password')
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            user = auth.authenticate(
+                request=request, username=username, password=password)
 
-    return render(request, 'website/login.html')
+            if user.is_authenticated:
+                auth.login(request, user)
+                return redirect('website:feed')
+
+    else:
+        form = UserLoginForm()
+
+    return render(request, 'website/login.html', {'form': form})
 
 
 def logout(request):
@@ -28,14 +56,10 @@ def logout(request):
     return render(request, 'website/logout.html')
 
 
-def index(request):
-    if not request.user.is_authenticated:
-        return redirect('website:login')
-
-    return render(request, 'website/index.html')
-
-
 def register(request):
+    if request.user.is_authenticated:
+        return redirect('website:index')
+
     # Handle POST request as signup form submission
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
@@ -51,24 +75,63 @@ def register(request):
     return render(request, 'website/register.html', {'form': form})
 
 
-class UserForm(ModelForm):
+@login_required
+def profile(request):
+    return render(request, 'website/profile.html')
+
+
+class UserUpdateForm(ModelForm):
     class Meta:
         model = User
         fields = ['first_name', 'last_name', 'email']
 
 
-def user_update(request):
-    if not request.user.is_authenticated:
-        return redirect('website:login')
-
+@login_required
+def profile_update(request):
     if request.method == 'POST':
-        form = UserForm(data=request.POST, instance=request.user)
+        form = UserUpdateForm(data=request.POST, instance=request.user)
         if form.is_valid():
             user = form.save(commit=False)
             user.save()
             messages.success(request, 'User updated successfully')
-            return redirect('website:index')
+            return redirect('website:profile')
     else:
-        form = UserForm(instance=request.user)
+        form = UserUpdateForm(instance=request.user)
 
     return render(request, 'website/user_update_form.html', {'form': form})
+
+
+@login_required
+def feed(request):
+    return render(request, 'website/feed.html')
+
+
+@login_required
+def saved_pins(request):
+    return render(request, 'website/saved_pins.html')
+
+
+class PinUploadForm(ModelForm):
+    class Meta:
+        model = Pin
+        fields =  ['title', 'description', 'picture']
+
+
+@login_required
+def upload(request):
+    if request.method == 'POST':
+        form = PinUploadForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            pin = form.save(commit=False)
+            pin.user_profile = Profile.objects.get(user=request.user)
+            pin.save()
+            messages.success(request, 'Pin uploaded successfully')
+            return redirect('website:feed')
+        else:
+            messages.error(request, 'There was a problem with your form, Please try again')
+            return redirect('website:upload')
+
+    else:
+        form = PinUploadForm()
+    return render(request, 'website/upload.html', {'form': form})
