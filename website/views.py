@@ -4,8 +4,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
+from django.core.exceptions import PermissionDenied
 from django.forms import ModelForm
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views import View
 from django.views.generic.list import ListView
 
 from .models import Pin, Profile
@@ -77,9 +79,9 @@ def register(request):
     return render(request, 'website/register.html', {'form': form})
 
 
-@login_required
-def profile(request):
-    return render(request, 'website/profile.html')
+def profile(request, username):
+    user = get_object_or_404(User, username=username)
+    return render(request, 'website/profile.html', {'user': user})
 
 
 class UserUpdateForm(ModelForm):
@@ -88,19 +90,28 @@ class UserUpdateForm(ModelForm):
         fields = ['first_name', 'last_name', 'email']
 
 
-@login_required
-def profile_update(request):
-    if request.method == 'POST':
+class ProfileUpdate(LoginRequiredMixin, View):
+    template_name = 'website/user_update_form.html'
+
+    def get(self, request, username):
+        if not request.user.username == username:
+            raise PermissionDenied
+
+        form = UserUpdateForm(instance=request.user)
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request, username):
+        if not request.user.username == username:
+            raise PermissionDenied
+
         form = UserUpdateForm(data=request.POST, instance=request.user)
         if form.is_valid():
             user = form.save(commit=False)
             user.save()
             messages.success(request, 'User updated successfully')
-            return redirect('website:profile')
-    else:
-        form = UserUpdateForm(instance=request.user)
+            return redirect('website:profile', username=request.user.username)
 
-    return render(request, 'website/user_update_form.html', {'form': form})
+        return render(request, self.template_name, {'form': form})
 
 
 class Feed(LoginRequiredMixin, ListView):

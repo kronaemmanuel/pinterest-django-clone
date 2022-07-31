@@ -20,8 +20,8 @@
                         Profile - {{ request.user.username }}
                     </a>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{% url 'website:profile' %}">View Profile</a></li>
-                        <li><a class="dropdown-item" href="{% url 'website:profile_update' %}">Update Profile</a></li>
+                        <li><a class="dropdown-item" href="{% url 'website:profile' username=request.user.username %}">View Profile</a></li>
+                        <li><a class="dropdown-item" href="{% url 'website:profile_update' username=request.user.username %}">Update Profile</a></li>
                         <li><a class="dropdown-item" href="{% url 'website:logout' %}">Logout</a></li>
                     </ul>
                 </li>
