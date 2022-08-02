@@ -1,10 +1,13 @@
 from django import forms
 from django.contrib import auth, messages
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.forms import ModelForm
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views import View
+from django.views.generic.list import ListView
 
 from .models import Pin, Profile
 
@@ -75,9 +78,9 @@ def register(request):
     return render(request, 'website/register.html', {'form': form})
 
 
-@login_required
-def profile(request):
-    return render(request, 'website/profile.html')
+def profile(request, username):
+    user = get_object_or_404(User, username=username)
+    return render(request, 'website/profile.html', {'user': user})
 
 
 class UserUpdateForm(ModelForm):
@@ -86,52 +89,116 @@ class UserUpdateForm(ModelForm):
         fields = ['first_name', 'last_name', 'email']
 
 
-@login_required
-def profile_update(request):
-    if request.method == 'POST':
+class ProfileUpdate(LoginRequiredMixin, View):
+    template_name = 'website/user_update_form.html'
+
+    def get(self, request, username):
+        if not request.user.username == username:
+            raise PermissionDenied
+
+        form = UserUpdateForm(instance=request.user)
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request, username):
+        if not request.user.username == username:
+            raise PermissionDenied
+
         form = UserUpdateForm(data=request.POST, instance=request.user)
         if form.is_valid():
             user = form.save(commit=False)
             user.save()
             messages.success(request, 'User updated successfully')
-            return redirect('website:profile')
-    else:
-        form = UserUpdateForm(instance=request.user)
+            return redirect('website:profile', username=request.user.username)
 
-    return render(request, 'website/user_update_form.html', {'form': form})
+        return render(request, self.template_name, {'form': form})
 
 
-@login_required
-def feed(request):
-    return render(request, 'website/feed.html')
+class Feed(LoginRequiredMixin, ListView):
+    login_url = 'website:login'
+    model = Pin
+    context_object_name = 'pins'
+    template_name = 'website/feed.html'
+
+    def get_queryset(self):
+        """
+        Returns the pins ordered in reverse chronological order with information about if the current user has saved
+        the pin or not
+        """
+        pins = Pin.objects.order_by('-created_at')
+        for pin in pins:
+            pin.user_has_saved = pin.has_user_saved_pin(self.request.user)
+
+        return pins
 
 
-@login_required
-def saved_pins(request):
-    return render(request, 'website/saved_pins.html')
+class SavedPins(LoginRequiredMixin, ListView):
+    login_url = 'website:login'
+    model = Pin
+    context_object_name = 'pins'
+    template_name = 'website/saved_pins.html'
+
+    def get_queryset(self):
+        """
+        Returns the pins ordered in reverse chronological order with information about if the current user has saved
+        the pin or not
+        """
+        profile = Profile.objects.get(user=self.request.user)
+        pins = profile.saved.all()
+        for pin in pins:
+            pin.user_has_saved = pin.has_user_saved_pin(self.request.user)
+
+        return pins
 
 
 class PinUploadForm(ModelForm):
     class Meta:
         model = Pin
-        fields =  ['title', 'description', 'picture']
+        fields = ['title', 'description', 'picture']
 
 
-@login_required
-def upload(request):
-    if request.method == 'POST':
+class Upload(LoginRequiredMixin, View):
+    template_name = 'website/upload.html'
+
+    def post(self, request, username):
+        if not request.user.username == username:
+            raise PermissionDenied
+
         form = PinUploadForm(request.POST, request.FILES)
 
         if form.is_valid():
             pin = form.save(commit=False)
             pin.user_profile = Profile.objects.get(user=request.user)
             pin.save()
-            messages.success(request, 'Pin uploaded successfully')
             return redirect('website:feed')
         else:
             messages.error(request, 'There was a problem with your form, Please try again')
             return redirect('website:upload')
 
-    else:
+    def get(self, request, username):
+        if not request.user.username == username:
+            raise PermissionDenied
+
         form = PinUploadForm()
-    return render(request, 'website/upload.html', {'form': form})
+        return render(request, self.template_name, {'form': form})
+
+
+def save_pin(request, pin_id):
+    pin = get_object_or_404(Pin, pk=pin_id)
+    try:
+        profile = Profile.objects.get(user=request.user)
+    except:
+        raise ValidationError
+    else:
+        pin.saved_by.add(profile)
+        return redirect('website:feed')
+
+
+def unsave_pin(request, pin_id):
+    pin = get_object_or_404(Pin, pk=pin_id)
+    try:
+        profile = Profile.objects.get(user=request.user)
+    except:
+        raise ValidationError
+    else:
+        pin.saved_by.remove(profile)
+        return redirect('website:feed')

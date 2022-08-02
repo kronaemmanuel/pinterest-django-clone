@@ -29,9 +29,16 @@ class Pin(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    likes = models.PositiveIntegerField(default=0)
     picture = models.ImageField(upload_to='images/')
     user_profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    saved_by = models.ManyToManyField(Profile, related_name='saved')
 
     def __str__(self):
         return self.title
+
+    def has_user_saved_pin(self, user):
+        profile = Profile.objects.get(user=user)
+        user_count = Pin.objects.filter(id=self.id, saved_by=profile).count()
+        if user_count == 1:
+            return True
+        return False
