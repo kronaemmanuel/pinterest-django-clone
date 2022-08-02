@@ -1,0 +1,76 @@
+{% extends 'website/base.html' %}
+
+{% block title %}{{ heading }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="p-5 mb-4 bg-light rounded-3">
+        <div class="container-fluid py-5 d-flex justify-content-between align-items-center">
+            <h1 class="text-red display-5 fw-bold">{{ heading }}</h1>
+            {% if showUpload %}
+            <a class="btn btn-danger d-flex align-items-center"
+               href="{% url 'website:upload' username=request.user.username %}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                     class="bi bi-plus-circle-fill me-2" viewBox="0 0 16 16">
+                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3v-3z"/>
+                </svg>
+                Upload
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap justify-content-center">
+        {% for pin in pins %}
+        <div class="card col-sm-3 me-4 mb-4">
+            <img src="{{ pin.picture.url }}" class="card-img-top" alt="{{ pin.description|lower }}">
+            <div class="card-body">
+                <h5 class="card-title">{{ pin.title }}</h5>
+                <p class="card-text">{{ pin.description }}</p>
+
+                <div class="d-flex justify-content-between">
+                    <div><!-- Pin Button -->
+                        {% if pin.user_has_saved %}
+                        <form action="{% url 'website:unsave_pin' pin.id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.path }}">
+                            <button type="submit" class="btn btn-danger">Unpin</button>
+                        </form>
+                        {% else %}
+                        <form action="{% url 'website:save_pin' pin.id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.path }}">
+                            <button type="submit" class="btn btn-danger">Pin</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    <div><!-- Like Button -->
+                        {% if pin.user_has_liked %}
+                        <form action="{% url 'website:unlike_pin' pin.id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.path }}">
+                            <button type="submit" class="btn btn-danger btn-outline">{{ pin.likes }}
+                                <svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" fill="white">
+                                    <path d="m9.979 17.958-1.521-1.375q-2.166-1.916-3.573-3.302-1.406-1.385-2.197-2.469-.792-1.083-1.105-2-.312-.916-.312-1.916 0-2.167 1.469-3.646 1.468-1.479 3.635-1.479 1 0 1.937.354.938.354 1.667 1.042.729-.688 1.667-1.042.937-.354 1.937-.354 2.167 0 3.657 1.479 1.489 1.479 1.489 3.646 0 .979-.291 1.875-.292.896-1.094 1.958-.802 1.063-2.229 2.479-1.427 1.417-3.657 3.417Z"/>
+                                </svg
+                            </button>
+                        </form>
+                        {% else %}
+                        <form action="{% url 'website:like_pin' pin.id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.path }}">
+                            <button type="submit" class="btn btn-outline-danger">{{ pin.likes }}
+                                <svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" fill="#dc3545">
+                                    <path d="m9.979 17.958-1.521-1.375q-2.166-1.916-3.573-3.302-1.406-1.385-2.197-2.469-.792-1.083-1.105-2-.312-.916-.312-1.916 0-2.167 1.469-3.646 1.468-1.479 3.635-1.479 1 0 1.937.354.938.354 1.667 1.042.729-.688 1.667-1.042.937-.354 1.937-.354 2.167 0 3.657 1.479 1.489 1.479 1.489 3.646 0 .979-.291 1.875-.292.896-1.094 1.958-.802 1.063-2.229 2.479-1.427 1.417-3.657 3.417Zm0-3.291q1.896-1.729 3.115-2.896 1.218-1.167 1.927-2.042.708-.875.979-1.531.271-.656.271-1.302 0-1.146-.771-1.906-.771-.761-1.917-.761-.645 0-1.239.302-.594.302-1.052.844l-.73.854H9.417l-.729-.854q-.459-.542-1.084-.844-.625-.302-1.229-.302-1.104 0-1.865.761-.76.76-.76 1.906 0 .666.26 1.312.261.646.948 1.511.688.864 1.896 2.031 1.208 1.167 3.125 2.917Zm.042-5.229Z"/>
+                                </svg>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock content %}

@@ -1,0 +1,36 @@
+{% extends "website/base.html" %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="h-100 p-5 bg-light border rounded-3">
+        <div class="section-inner clearfix">
+            <h1 class="d-inline">Profile Details</h1>
+            {% if request.user.username == user.username %}
+            <a class="text-primary" href="{% url 'website:profile_update' username=request.user.username %}">Update</a>
+            {% endif %}
+
+            {% if messages %}
+            <ul class="text-danger">
+                {% for message in messages %}
+                <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+            <ul>
+                <li>First Name: {{ user.first_name|default:"NA" }}</li>
+                <li>Last Name: {{ user.last_name|default:"NA" }}</li>
+                <li>Email: {{ user.email|default:"NA" }}</li>
+                <li>SuperUser: {{ user.is_superuser }}</li>
+                <li>Staff: {{ user.is_staff }}</li>
+                <li>Date Joined: {{ user.date_joined }}</li>
+                <li>Last Login: {{ user.last_login }}</li>
+            </ul>
+
+
+        </div>
+    </div>
+</div>
+{% endblock %}
