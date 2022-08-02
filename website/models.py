@@ -32,6 +32,8 @@ class Pin(models.Model):
     picture = models.ImageField(upload_to='images/')
     user_profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
     saved_by = models.ManyToManyField(Profile, related_name='saved')
+    likes = models.IntegerField(default=0)
+    liked_by = models.ManyToManyField(Profile, related_name='liked')
 
     def __str__(self):
         return self.title
@@ -42,3 +44,11 @@ class Pin(models.Model):
         if user_count == 1:
             return True
         return False
+
+    def has_user_liked_pin(self, user):
+        profile = Profile.objects.get(user=user)
+        user_count = Pin.objects.filter(id=self.id, liked_by=profile).count()
+        if user_count == 1:
+            return True
+        return False
+
