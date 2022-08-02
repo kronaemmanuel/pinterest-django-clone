@@ -14,5 +14,7 @@ urlpatterns = [
     path('saved_pins', views.SavedPins.as_view(), name='saved_pins'),
     path('<int:pin_id>/save_pin', views.save_pin, name='save_pin'),
     path('<int:pin_id>/unsave_pin', views.unsave_pin, name='unsave_pin'),
+    path('<int:pin_id>/like_pin', views.like_pin, name='like_pin'),
+    path('<int:pin_id>/unlike_pin', views.unlike_pin, name='unlike_pin'),
     path('<username>/upload', views.Upload.as_view(), name='upload')
 ]

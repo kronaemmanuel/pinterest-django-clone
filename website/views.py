@@ -3,7 +3,7 @@ from django.contrib import auth, messages
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import FieldError, PermissionDenied, ValidationError
 from django.forms import ModelForm
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
@@ -127,15 +127,25 @@ class Feed(LoginRequiredMixin, ListView):
         pins = Pin.objects.order_by('-created_at')
         for pin in pins:
             pin.user_has_saved = pin.has_user_saved_pin(self.request.user)
+            pin.user_has_liked = pin.has_user_liked_pin(self.request.user)
 
         return pins
+
+    def get_context_data(self, *args, **kwargs):
+        """
+        Returns default context with extra information added so that Feed and SavedPins can use same template
+        """
+        context = super(ListView, self).get_context_data(*args, **kwargs)
+        context['heading'] = 'Feed'
+        context['showUpload'] = True
+        return context
 
 
 class SavedPins(LoginRequiredMixin, ListView):
     login_url = 'website:login'
     model = Pin
     context_object_name = 'pins'
-    template_name = 'website/saved_pins.html'
+    template_name = 'website/feed.html'
 
     def get_queryset(self):
         """
@@ -148,6 +158,15 @@ class SavedPins(LoginRequiredMixin, ListView):
             pin.user_has_saved = pin.has_user_saved_pin(self.request.user)
 
         return pins
+
+    def get_context_data(self, *args, **kwargs):
+        """
+        Returns default context with extra information added so that Feed and SavedPins can use same template
+        """
+        context = super(ListView, self).get_context_data(*args, **kwargs)
+        context['heading'] = 'Saved Pins'
+        context['showUpload'] = False
+        return context
 
 
 class PinUploadForm(ModelForm):
@@ -201,4 +220,34 @@ def unsave_pin(request, pin_id):
         raise ValidationError
     else:
         pin.saved_by.remove(profile)
+        return redirect('website:feed')
+
+
+def like_pin(request, pin_id):
+    pin = get_object_or_404(Pin, pk=pin_id)
+    try:
+        if pin.has_user_liked_pin(request.user):
+            raise FieldError
+        profile = Profile.objects.get(user=request.user)
+    except:
+        raise ValidationError
+    else:
+        pin.liked_by.add(profile)
+        pin.likes += 1
+        pin.save()
+        return redirect('website:feed')
+
+
+def unlike_pin(request, pin_id):
+    pin = get_object_or_404(Pin, pk=pin_id)
+    try:
+        if not pin.has_user_liked_pin(request.user):
+            raise FieldError
+        profile = Profile.objects.get(user=request.user)
+    except:
+        raise ValidationError
+    else:
+        pin.liked_by.remove(profile)
+        pin.likes -= 1
+        pin.save()
         return redirect('website:feed')
