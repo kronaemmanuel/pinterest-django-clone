@@ -174,6 +174,15 @@ class PinUploadForm(ModelForm):
         model = Pin
         fields = ['title', 'description', 'picture']
 
+    def clean_picture(self):
+        image = self.cleaned_data.get('image', False)
+        if image:
+            if image.size > 1000000:
+                raise ValidationError("Image file too large (> 1Mb)")
+            return image
+        else:
+            raise ValidationError("Couldn't read uploaded image")
+
 
 class Upload(LoginRequiredMixin, View):
     template_name = 'website/upload.html'
@@ -191,7 +200,7 @@ class Upload(LoginRequiredMixin, View):
             return redirect('website:feed')
         else:
             messages.error(request, 'There was a problem with your form, Please try again')
-            return redirect('website:upload')
+            return redirect('website:upload', username=username)
 
     def get(self, request, username):
         if not request.user.username == username:
