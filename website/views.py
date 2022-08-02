@@ -1,10 +1,9 @@
 from django import forms
 from django.contrib import auth, messages
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.forms import ModelForm
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
@@ -122,25 +121,48 @@ class Feed(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         """
-        Returns the pins ordered in reverse chronological order
+        Returns the pins ordered in reverse chronological order with information about if the current user has saved
+        the pin or not
         """
-        return Pin.objects.order_by('-created_at')
+        pins = Pin.objects.order_by('-created_at')
+        for pin in pins:
+            pin.user_has_saved = pin.has_user_saved_pin(self.request.user)
+
+        return pins
 
 
-@login_required
-def saved_pins(request):
-    return render(request, 'website/saved_pins.html')
+class SavedPins(LoginRequiredMixin, ListView):
+    login_url = 'website:login'
+    model = Pin
+    context_object_name = 'pins'
+    template_name = 'website/saved_pins.html'
+
+    def get_queryset(self):
+        """
+        Returns the pins ordered in reverse chronological order with information about if the current user has saved
+        the pin or not
+        """
+        profile = Profile.objects.get(user=self.request.user)
+        pins = profile.saved.all()
+        for pin in pins:
+            pin.user_has_saved = pin.has_user_saved_pin(self.request.user)
+
+        return pins
 
 
 class PinUploadForm(ModelForm):
     class Meta:
         model = Pin
-        fields =  ['title', 'description', 'picture']
+        fields = ['title', 'description', 'picture']
 
 
-@login_required
-def upload(request):
-    if request.method == 'POST':
+class Upload(LoginRequiredMixin, View):
+    template_name = 'website/upload.html'
+
+    def post(self, request, username):
+        if not request.user.username == username:
+            raise PermissionDenied
+
         form = PinUploadForm(request.POST, request.FILES)
 
         if form.is_valid():
@@ -152,6 +174,31 @@ def upload(request):
             messages.error(request, 'There was a problem with your form, Please try again')
             return redirect('website:upload')
 
-    else:
+    def get(self, request, username):
+        if not request.user.username == username:
+            raise PermissionDenied
+
         form = PinUploadForm()
-    return render(request, 'website/upload.html', {'form': form})
+        return render(request, self.template_name, {'form': form})
+
+
+def save_pin(request, pin_id):
+    pin = get_object_or_404(Pin, pk=pin_id)
+    try:
+        profile = Profile.objects.get(user=request.user)
+    except:
+        raise ValidationError
+    else:
+        pin.saved_by.add(profile)
+        return redirect('website:feed')
+
+
+def unsave_pin(request, pin_id):
+    pin = get_object_or_404(Pin, pk=pin_id)
+    try:
+        profile = Profile.objects.get(user=request.user)
+    except:
+        raise ValidationError
+    else:
+        pin.saved_by.remove(profile)
+        return redirect('website:feed')

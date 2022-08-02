@@ -1,5 +1,37 @@
 {% extends 'website/base.html' %}
 
+{% block title %}Saved Pins{% endblock %}
+
 {% block content %}
-<div>You have reached your saved pins</div>
+<div class="container mt-4">
+    <div class="p-5 mb-4 bg-light rounded-3">
+        <div class="container-fluid py-5 d-flex justify-content-between align-items-center">
+            <h1 class="text-red display-5 fw-bold">Saved Pins</h1>
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap justify-content-center">
+        {% for pin in pins %}
+        <div class="card col-sm-3 me-4 mb-4">
+            <img src="{{ pin.picture.url }}" class="card-img-top" alt="{{ pin.description|lower }}">
+            <div class="card-body">
+                <h5 class="card-title">{{ pin.title }}</h5>
+                <p class="card-text">{{ pin.description }}</p>
+
+                {% if pin.user_has_saved %}
+                <form action="{% url 'website:unsave_pin' pin.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Unpin</button>
+                </form>
+                {% else %}
+                <form action="{% url 'website:save_pin' pin.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Pin</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
 {% endblock content %}
